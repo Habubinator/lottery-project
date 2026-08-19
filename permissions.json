@@ -1,0 +1,64 @@
+[
+  {
+    "role": "admin",
+    "permissions": [
+      {
+        "resource": "stats",
+        "actions": ["users_and_services", "payments"]
+      },
+      {
+        "resource": "users",
+        "actions": [
+          "read_personal_info",
+          "edit_personal_info",
+          "read_payments",
+          "edit_tariff_plan",
+          "read_subscription",
+          "edit_subscription",
+          "activate_demo_subscription",
+          "ban",
+          "unban",
+          "login"
+        ]
+      },
+      {
+        "resource": "dealers",
+        "actions": ["create", "read", "manage_finances", "login"]
+      },
+      {
+        "resource": "partners",
+        "actions": ["manage"]
+      },
+      {
+        "resource": "coupons",
+        "actions": ["read", "manage"]
+      },
+      {
+        "resource": "channels",
+        "actions": [
+          "read_required_attention",
+          "edit_required_attention",
+          "read",
+          "edit"
+        ]
+      },
+      {
+        "resource": "categories",
+        "actions": ["read", "manage"]
+      },
+      {
+        "resource": "tariff_plans",
+        "actions": ["create", "edit"]
+      },
+      {
+        "resource": "settings",
+        "actions": [
+          "edit_system_params",
+          "read_servers",
+          "manage_servers",
+          "generate_short_url"
+        ]
+      }
+    ]
+  }
+]

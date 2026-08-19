@@ -1,0 +1,44 @@
+{
+  "roles": [{ "name": "super_admin" }, { "name": "admin" }, { "name": "user" }],
+  "permissions": [
+    { "resource": "users", "action": "create" },
+    { "resource": "users", "action": "read" },
+    { "resource": "users", "action": "update" },
+    { "resource": "users", "action": "delete" },
+    { "resource": "giveaways", "action": "create" },
+    { "resource": "giveaways", "action": "read" },
+    { "resource": "giveaways", "action": "update" },
+    { "resource": "giveaways", "action": "delete" },
+    { "resource": "channels", "action": "create" },
+    { "resource": "channels", "action": "read" },
+    { "resource": "channels", "action": "update" },
+    { "resource": "channels", "action": "delete" },
+    { "resource": "withdrawals", "action": "read" },
+    { "resource": "withdrawals", "action": "update" }
+  ],
+  "tariffs": [
+    {
+      "label": "1 month",
+      "currency": "Stars",
+      "price": 650,
+      "lengthDays": 30
+    },
+    {
+      "label": "3 months",
+      "currency": "Stars",
+      "price": 1800,
+      "lengthDays": 90
+    },
+    {
+      "label": "6 months",
+      "currency": "Stars",
+      "price": 3400,
+      "lengthDays": 180
+    }
+  ],
+  "users": [],
+  "wallets": [],
+  "channels": [],
+  "sponsorLinks": [],
+  "giveaways": []
+}

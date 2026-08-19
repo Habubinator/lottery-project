@@ -1,0 +1,929 @@
+generator client {
+  provider = "prisma-client-js"
+  // previewFeatures = ["omitApi"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("POSTGRES_URL")
+}
+
+model Role {
+  id          Int              @id @default(autoincrement())
+  name        String           @unique @db.VarChar(16)
+  permissions RolePermission[]
+  users       User[]
+
+  @@map("roles")
+}
+
+model Permission {
+  id       Int              @id @default(autoincrement())
+  resource String           @db.VarChar(32)
+  action   String           @db.VarChar(32)
+  roles    RolePermission[]
+
+  @@unique([resource, action])
+  @@map("permissions")
+}
+
+model RolePermission {
+  id           Int               @id @default(autoincrement())
+  roleId       Int               @map("role_id")
+  role         Role              @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permissionId Int               @map("permission_id")
+  permission   Permission        @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+  users        UserPermissions[]
+
+  @@unique([roleId, permissionId])
+  @@map("role_permissions")
+}
+
+model UserPermissions {
+  userId           Int            @map("user_id")
+  user             User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  rolePermissionId Int            @map("role_permission_id")
+  rolePermission   RolePermission @relation(fields: [rolePermissionId], references: [id], onDelete: Cascade)
+
+  @@id([userId, rolePermissionId])
+  @@map("user_permissions")
+}
+
+model UserSession {
+  id            String   @id @default(uuid()) @db.Uuid
+  ip            String
+  userAgent     String   @map("user_agent")
+  refreshToken  String   @map("refresh_token")
+  userId        Int      @map("user_id")
+  lastRefreshAt DateTime @updatedAt @map("last_refresh_at") @db.Timestamptz(3)
+
+  @@unique([userAgent, userId])
+  @@index([userId], type: Hash)
+  @@map("user_sessions")
+}
+
+model UserActivity {
+  userId         Int      @map("user_id")
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  ip             String
+  lastActivityAt DateTime @default(now()) @map("last_activity_at") @db.Timestamptz(3)
+
+  @@id([userId, ip])
+  @@index([userId])
+  @@index([ip])
+  @@map("user_activities")
+}
+
+model UserBan {
+  userId    Int      @id @map("user_id")
+  reason    String   @map("reason") @db.VarChar(512)
+  expiredAt DateTime @map("expired_at") @db.Timestamptz(3)
+
+  @@map("user_bans")
+}
+
+model UserNotification {
+  id    Int    @id @default(autoincrement())
+  label String
+}
+
+model NotificationList {
+  id        Int     @id @default(autoincrement())
+  userId    Int     @map("user_id")
+  user      User    @relation("UserNotifications", fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  channelId BigInt  @map("channel_id")
+  channel   Channel @relation(fields: [channelId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@unique([userId, channelId])
+  @@index([userId])
+  @@index([channelId])
+  @@map("notification_list")
+}
+
+model Withdrawal {
+  id       Int              @id @default(autoincrement())
+  currency Currencies
+  amount   Float            @map("amount")
+  status   WithdrawalStatus @default(Reviewed)
+  walletId Int
+  wallet   Wallet           @relation(fields: [walletId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  userId   Int
+  user     User             @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  photos   String[]
+  notes    String           @default("")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@index([userId])
+  @@index([status])
+  @@map("withdrawals")
+}
+
+enum WithdrawalStatus {
+  Reviewed
+  Accepted
+  Denied
+}
+
+enum BusinessAccountType {
+  Standard
+  Unique
+}
+
+model User {
+  id               Int                 @id @default(autoincrement())
+  telegramId       String              @default("")
+  username         String?
+  first_name       String              @default("")
+  last_name        String?
+  language_code    String              @default("en")
+  picked_language  String              @default("en")
+  isLanguagePicked Boolean             @default(false) @map("is_language_picked")
+  photo_url        String              @default("")
+  is_premium       Boolean             @default(false)
+  roleId           Int                 @map("role_id")
+  role             Role                @relation(fields: [roleId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  tonAddress       String?
+  notificationList NotificationSetting @default(NoOne) @map("notification_setting")
+  freePremiumUses  Int                 @default(3) @map("free_premium_uses")
+
+  referralsGiven    GiveawayReferral[] @relation("Referrer")
+  referralsReceived GiveawayReferral[] @relation("Referred")
+
+  isBanned     Boolean       @default(false) @map("is_banned")
+  subscription Subscribers[]
+  createdAt    DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt    DateTime      @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  permissions                UserPermissions[]
+  activities                 UserActivity[]
+  wallet                     Wallet?
+  giveaways                  Participant[]
+  transactions               TransactionHistory[]
+  createdGiveaways           Giveaway[]                          @relation("GiveawayCreator")
+  templates                  Template[]
+  holdingStars               HoldingStars[]
+  withdrawals                Withdrawal[]
+  notificationChannels       NotificationList[]                  @relation("UserNotifications")
+  channelsAdded              AddedBy[]
+  tonInvoices                TonInvoice[]
+  participationConfirmations GiveawayParticipationConfirmation[]
+  sponsorLinkVisits          SponsorLinkVisit[]
+  sponsorApprovals           SponsorApproval[]
+  channelSearchHistory       ChannelSearchHistory[]
+  managedSharedChannels      LinkedChannels[]                    @relation("SharedChannelManager")
+  descriptionRequest         DescriptionRequest?
+  tempBannerUploads          TempBannerUpload[]
+  earnedTickets              GiveawayEarnedTickets[]
+  linkRequests               LinkRequest[]
+  depositedPrizes            GiveawayPrize[]                     @relation("PrizeDepositor")
+  wonPrizes                  GiveawayPrize[]                     @relation("PrizeWinner")
+  postlotPublications        PostlotPublication[]
+  businessConnectionId       String?                             @map("business_connection_id")
+  businessAccountType        BusinessAccountType?                @map("business_account_type")
+
+  defaultParticipationButtonText   String?  @map("default_participation_button_text")
+  defaultParticipationButtonStyle  String?  @map("default_participation_button_style")
+  defaultShowParticipationCount    Boolean? @map("default_show_participation_count")
+  defaultShowParticipationMaxCount Boolean? @map("default_show_participation_max_count")
+
+  @@index([roleId])
+  @@map("users")
+}
+
+model Wallet {
+  id                 Int                  @id @default(autoincrement())
+  userId             Int?                 @unique
+  starsBalance       Float                @default(0)
+  holdedStarsBalance Float                @default(0)
+  tonBalance         Float                @default(0)
+  owner              User?                @relation(fields: [userId], references: [id])
+  transactionHistory TransactionHistory[]
+  withdrawals        Withdrawal[]
+
+  @@map("wallet")
+}
+
+model HoldingStars {
+  id            Int               @id @default(autoincrement())
+  transactionId String
+  userId        Int
+  owner         User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  giveawayId    String?           @map("giveaway_id") @db.Uuid
+  validWhen     DateTime          @map("valid_when") @db.Timestamptz(3)
+  ammount       Float
+  status        TransactionStatus
+
+  @@index([userId])
+  @@index([status])
+  @@index([validWhen])
+  @@map("holds")
+}
+
+model Tariff {
+  id          Int           @id @default(autoincrement())
+  label       String
+  currency    Currencies    @default(Stars)
+  price       Int           @default(0)
+  tonPrice    Decimal       @default(0) @map("ton_price") @db.Decimal(18, 8)
+  lengthDays  Int           @default(30)
+  subscribers Subscribers[]
+}
+
+model Subscribers {
+  userId                 Int       @map("subscriber_id")
+  user                   User      @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  tariffId               Int       @map("tariff_id")
+  tariff                 Tariff    @relation(fields: [tariffId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  subscriptionExpiringAt DateTime? @map("subscription_expiring_at") @db.Timestamptz(3)
+
+  @@id([userId, tariffId])
+  @@index([userId])
+  @@index([tariffId])
+  @@map("subscribers")
+}
+
+model TransactionHistory {
+  id                    String            @id @default(uuid()) @map("transaction_id") @db.Uuid
+  walletId              Int
+  wallet                Wallet            @relation(fields: [walletId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  userId                Int
+  user                  User              @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  type                  TransactionType
+  status                TransactionStatus
+  currency              Currencies        @default(Stars)
+  value                 Float             @default(0)
+  balanceBefore         Float?            @map("balance_before")
+  balanceAfter          Float?            @map("balance_after")
+  isSubscriptionPayment Boolean           @default(false)
+  additionalInfo        String?
+  telegramPaymentId     String?           @map("telegram_payment_id")
+  createdAt             DateTime          @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@index([telegramPaymentId])
+}
+
+enum TransactionType {
+  Incoming
+  Outcoming
+}
+
+enum TransactionStatus {
+  Pending
+  Completed
+  Failed
+}
+
+model Participant {
+  uuid               String   @id @default(uuid()) @db.Uuid
+  userId             Int      @map("user_id")
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  giveawayId         String   @map("giveaway_id") @db.Uuid
+  giveaway           Giveaway @relation(fields: [giveawayId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  isWinner           Boolean  @default(false) @map("is_winner")
+  winPlace           Int      @default(0)
+  isAddWinner        Boolean  @default(false) @map("is_add_winner")
+  range              String   @default("")
+  addPlace           Int      @default(0)
+  participatedAt     DateTime @default(now()) @map("participated_at") @db.Timestamptz(3)
+  wasReplaced        Boolean  @default(false) @map("was_replaced")
+  replacedWinnerUuid String?  @map("replaced_winner_uuid") @db.Uuid
+
+  wonPrizeId Int?           @map("won_prize_id")
+  wonPrize   GiveawayPrize? @relation(fields: [wonPrizeId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+
+  @@index([userId])
+  @@index([giveawayId])
+  @@map("participants")
+}
+
+model GiveawayParticipationConfirmation {
+  id         String   @id @default(uuid()) @db.Uuid
+  userId     Int      @map("user_id")
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  giveawayId String   @map("giveaway_id") @db.Uuid
+  giveaway   Giveaway @relation(fields: [giveawayId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  tickets    Int      @default(1)
+  expiresAt  DateTime @map("expires_at") @db.Timestamptz(3)
+  isUsed     Boolean  @default(false) @map("is_used")
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@unique([userId, giveawayId, isUsed])
+  @@index([userId])
+  @@index([giveawayId])
+  @@index([expiresAt])
+  @@index([isUsed])
+  @@map("giveaway_participation_confirmations")
+}
+
+model GiveawayReferral {
+  id         Int      @id @default(autoincrement())
+  giveawayId String   @map("giveaway_id") @db.Uuid
+  giveaway   Giveaway @relation(fields: [giveawayId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  referrerId Int      @map("referrer_id")
+  referrer   User     @relation("Referrer", fields: [referrerId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  referredId Int      @map("referred_id")
+  referred   User     @relation("Referred", fields: [referredId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  hasParticipated Boolean  @default(false) @map("has_participated")
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@unique([giveawayId, referrerId, referredId])
+  @@index([giveawayId])
+  @@index([referrerId])
+  @@index([referredId])
+  @@map("giveaway_referrals")
+}
+
+model GiveawayEarnedTickets {
+  id               Int      @id @default(autoincrement())
+  giveawayId       String   @map("giveaway_id") @db.Uuid
+  giveaway         Giveaway @relation(fields: [giveawayId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  userId           Int      @map("user_id")
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  earnedFromRefs   Int      @default(0) @map("earned_from_refs")
+  earnedFromBoosts Int      @default(0) @map("earned_from_boosts")
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt        DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@unique([giveawayId, userId])
+  @@index([giveawayId])
+  @@index([userId])
+  @@map("giveaway_earned_tickets")
+}
+
+model Channel {
+  id                   BigInt                 @id @map("channel_id")
+  photo                String?
+  username             String?
+  title                String?
+  type                 String?
+  inviteLink           String?                @map("invite_link")
+  isActive             Boolean                @default(true)
+  botCanPostMessages   Boolean                @default(true) @map("bot_can_post_messages")
+  botCanInviteUsers    Boolean                @default(true) @map("bot_can_invite_users")
+  sponsoring           Sponsors[]
+  refferencedIn        LinkedChannels[]
+  notificationLists    NotificationList[]
+  addedBy              AddedBy[]
+  boostedBy            Giveaway[]
+  messages             GiveawayMessage[]
+  sponsorApprovals     SponsorApproval[]
+  channelSearchHistory ChannelSearchHistory[]
+  linkRequests         LinkRequest[]
+  postlotPublications  PostlotPublication[]
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+}
+
+model SponsorLink {
+  id         Int                @id @default(autoincrement()) @map("sponsor_link_id")
+  title      String             @map("sponsor_link_title")
+  link       String             @map("sponsor_link")
+  imageUrl   String?            @map("image_url")
+  sponsoring Sponsors[]
+  visits     SponsorLinkVisit[]
+}
+
+model Sponsors {
+  id               Int          @id @default(autoincrement()) @map("sponsor_id")
+  giveawayId       String       @map("giveaway_sponsor_id") @db.Uuid
+  giveaway         Giveaway     @relation(fields: [giveawayId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  sponsorType      SponsorType  @map("sponsor_type")
+  sponsorLinkId    Int?         @map("sponsor_link_id")
+  sponsorLink      SponsorLink? @relation(fields: [sponsorLinkId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  sponsorChannelId BigInt?      @map("sponsor_channel_id")
+  sponsorChannel   Channel?     @relation(fields: [sponsorChannelId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@unique([giveawayId, sponsorLinkId, sponsorChannelId])
+  @@index([giveawayId])
+  @@index([sponsorLinkId])
+  @@index([sponsorChannelId])
+  @@map("sponsors")
+}
+
+enum SponsorType {
+  Link
+  Channel
+}
+
+enum LinkedChannelRole {
+  All // posting + subscription required (default — backward compat)
+  Posting // giveaway is posted here, no subscription required
+  Subscription // users must subscribe, giveaway not posted here
+}
+
+model SponsorLinkVisit {
+  id            Int         @id @default(autoincrement())
+  userId        Int         @map("user_id")
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  giveawayId    String      @map("giveaway_id") @db.Uuid
+  giveaway      Giveaway    @relation(fields: [giveawayId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  sponsorLinkId Int         @map("sponsor_link_id")
+  sponsorLink   SponsorLink @relation(fields: [sponsorLinkId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  visitedAt     DateTime    @default(now()) @map("visited_at") @db.Timestamptz(3)
+
+  @@unique([userId, giveawayId, sponsorLinkId])
+  @@index([userId])
+  @@index([giveawayId])
+  @@index([sponsorLinkId])
+  @@map("sponsor_link_visits")
+}
+
+model LinkedChannels {
+  channelId             BigInt    @map("giveaway_channel_id")
+  channel               Channel   @relation(fields: [channelId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  giveawayId            String    @map("giveaway_sponsor_id") @db.Uuid
+  giveaway              Giveaway  @relation(fields: [giveawayId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  managedByUserId       Int?      @map("managed_by_user_id")
+  managedBy             User?     @relation("SharedChannelManager", fields: [managedByUserId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  publicationReservedAt DateTime? @map("publication_reserved_at") @db.Timestamptz(3)
+
+  role LinkedChannelRole @default(All) @map("role")
+
+  // Per-channel result settings (used for sponsor/non-creator channels)
+  isPostingResults    Boolean @default(false) @map("is_posting_results")
+  isResultsInMainPost Boolean @default(false) @map("is_results_in_main_post")
+  isCommentsOn        Boolean @default(false) @map("is_comments_on")
+
+  @@id([channelId, giveawayId])
+  @@index([channelId])
+  @@index([giveawayId])
+  @@index([managedByUserId])
+  @@map("linked_channels")
+}
+
+model PostlotPublication {
+  id            Int      @id @default(autoincrement())
+  giveawayId    String   @map("giveaway_id") @db.Uuid
+  giveaway      Giveaway @relation(fields: [giveawayId], references: [id], onDelete: Cascade)
+  channelId     BigInt   @map("channel_id")
+  channel       Channel  @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  publishedById Int      @map("published_by_id")
+  publishedBy   User     @relation(fields: [publishedById], references: [id])
+  messageIds    BigInt[] @default([]) @map("message_ids")
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@unique([channelId, giveawayId])
+  @@index([giveawayId])
+  @@index([channelId])
+  @@map("postlot_publications")
+}
+
+model Giveaway {
+  id                 String            @id @default(uuid()) @map("giveaway_id") @db.Uuid
+  isActive           Boolean           @default(true) @map("is_active")
+  isPlanned          Boolean           @default(false) @map("is_planned")
+  isCancelled        Boolean           @default(false) @map("is_cancelled")
+  cancelDescription  String?
+  description        String?           @map("giveaway_desc")
+  banner             String[]          @default([]) @map("giveaway_banner")
+  participiationType GiveawayStartType @map("giveaway_start_type")
+  completionType     GiveawayEndType   @map("giveaway_end_type")
+
+  language               String        @map("giveaway_language")
+  participants           Participant[]
+  maxParticipants        Int?          @map("max_participants")
+  winnerSlots            Int           @map("winner_slots")
+  participiationPrice    Decimal       @default(0) @map("participiation_price") @db.Decimal(10, 2)
+  participiationCurr     Currencies    @default(Stars) @map("participiation_curr")
+  numerifyWinners        Boolean       @default(false) @map("numerify_winners")
+  allowMultipleWinPlaces Boolean       @default(false) @map("allow_multiple_win_places")
+  isResultsInMainPost    Boolean       @default(false) @map("is_results_in_main_post")
+  isCommentsOn           Boolean       @default(false) @map("is_comments_on")
+  variant                String        @default("standard") @map("variant") @db.VarChar(16)
+
+  // Sponsor slots (joint system)
+  sponsorSlots Int?          @map("sponsor_slots")
+  starsPerSlot Int?          @map("stars_per_slot")
+  linkRequests LinkRequest[]
+
+  // Ads
+  isPostingOn           Boolean   @default(false) @map("is_posting_on")
+  isNotificationOn      Boolean   @default(false) @map("is_notification_on")
+  twinkBlock            Boolean   @default(false) @map("twink_block")
+  advertisedAt          DateTime? @map("advertised_at") @db.Timestamptz(3)
+  lastNotifiedAt        DateTime? @map("last_notified_at") @db.Timestamptz(3)
+  lastChannelNotifiedAt DateTime? @map("last_channel_notified_at") @db.Timestamptz(3)
+  notificationPaidAt    DateTime? @map("notification_paid_at") @db.Timestamptz(3)
+
+  sponsoredBy    Sponsors[]
+  linkedChannels LinkedChannels[]
+  messages       GiveawayMessage[]
+
+  // Subscription stuff
+  neededReferals            Int                @default(0) @map("needed_referals")
+  referrals                 GiveawayReferral[]
+  isOnlyPremium             Boolean            @default(false) @map("is_only_premium")
+  isBoostNeeded             Boolean            @default(false) @map("boost_needed")
+  boostedId                 BigInt?
+  boostedChannel            Channel?           @relation(fields: [boostedId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  allowedGeoCountries       String             @default("") @map("allowed_geo_list")
+  isCaptchaNeeded           Boolean            @default(false) @map("is_captcha_needed")
+  doApiSessionCheck         Boolean            @default(false) @map("do_api_session_check")
+  isStaySubscribed          Boolean            @default(false) @map("is_stay_subscribed")
+  participationButtonText   String?            @map("participation_button_text")
+  participationButtonStyle  String?            @map("participation_button_style")
+  showParticipationCount    Boolean            @default(true) @map("show_participation_count")
+  showParticipationMaxCount Boolean            @default(true) @map("show_participation_max_count")
+
+  // Additional tickets via referrals & boosts
+  canEarnAdditionalTickets Boolean                 @default(false) @map("can_earn_additional_tickets")
+  countRefsOnParticipation Boolean                 @default(false) @map("count_refs_on_participation")
+  refsPerTicket            Int                     @default(0) @map("refs_per_ticket")
+  boostsPerTicket          Int                     @default(0) @map("boosts_per_ticket")
+  maxAdditionalTickets     Int                     @default(0) @map("max_additional_tickets")
+  earnedTickets            GiveawayEarnedTickets[]
+
+  // Stats
+  apiSessionBlockCount Int @default(0) @map("api_session_block_count")
+
+  // Gift prizes
+  numerifyPrizes Boolean         @default(false) @map("numerify_prizes")
+  prizes         GiveawayPrize[]
+
+  startingAt DateTime  @default(now()) @map("starting_at") @db.Timestamptz(3)
+  endingAt   DateTime? @map("ending_at") @db.Timestamptz(3)
+  finishedAt DateTime? @map("finished_at") @db.Timestamptz(3)
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  createdById Int?  @map("created_by")
+  createdBy   User? @relation("GiveawayCreator", fields: [createdById], references: [id], onDelete: SetNull, onUpdate: Cascade)
+
+  templates                  Template[]
+  participationConfirmations GiveawayParticipationConfirmation[]
+  joinRequestApprovals       ChannelJoinRequestApproval[]
+  sponsorLinkVisits          SponsorLinkVisit[]
+  sponsorApprovals           SponsorApproval[]
+  postlotPublications        PostlotPublication[]
+
+  @@index([createdById])
+  @@map("giveaways")
+}
+
+model Template {
+  id         String   @id @default(uuid()) @map("template_id") @db.Uuid
+  userId     Int      @map("user_id")
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  giveawayId String   @map("giveaway_id") @db.Uuid
+  giveaway   Giveaway @relation(fields: [giveawayId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  name       String?  @map("template_name")
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt  DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@index([userId])
+  @@index([giveawayId])
+  @@index([userId, name])
+  @@map("templates")
+}
+
+enum Currencies {
+  Stars
+  TON
+}
+
+enum GiveawayStartType {
+  Lottery
+  Random
+}
+
+enum GiveawayEndType {
+  ByTime
+  ByCapacity
+}
+
+enum NotificationSetting {
+  FromAll
+  MyList
+  NoOne
+}
+
+model AddedBy {
+  channelId BigInt  @map("channel_id")
+  channel   Channel @relation(fields: [channelId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  userId    Int     @map("user_id")
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@id([channelId, userId])
+  @@index([userId])
+  @@index([channelId])
+  @@map("added_by")
+}
+
+model ChannelSearchHistory {
+  id         Int      @id @default(autoincrement())
+  userId     Int      @map("user_id")
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  channelId  BigInt   @map("channel_id")
+  channel    Channel  @relation(fields: [channelId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  searchedAt DateTime @default(now()) @map("searched_at") @db.Timestamptz(3)
+
+  @@unique([userId, channelId])
+  @@index([userId])
+  @@map("channel_search_history")
+}
+
+model GiveawayMessage {
+  id                  Int      @id @default(autoincrement())
+  giveawayId          String   @map("giveaway_id") @db.Uuid
+  giveaway            Giveaway @relation(fields: [giveawayId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  channelId           BigInt   @map("channel_id")
+  channel             Channel  @relation(fields: [channelId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  messageId           BigInt   @map("message_id")
+  mediaGroupMessageId BigInt?  @map("media_group_message_id")
+  winnerMessageId     BigInt?  @map("winner_message_id")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@unique([giveawayId, channelId, messageId])
+  @@index([giveawayId])
+  @@index([channelId])
+  @@index([winnerMessageId])
+  @@index([mediaGroupMessageId])
+  @@map("giveaway_messages")
+}
+
+model MinTransactionValue {
+  id    Int     @id @default(autoincrement())
+  stars Int     @default(0) @map("stars_min_value")
+  ton   Decimal @default(0) @map("ton_min_value")
+
+  @@map("min_transactional_value")
+}
+
+model WithdrawalCommission {
+  id           Int   @id @default(autoincrement())
+  starsPercent Float @default(0) @map("stars_percent")
+  tonPercent   Float @default(0) @map("ton_percent")
+
+  @@map("withdrawal_commission")
+}
+
+model ExchangeRate {
+  id         Int     @id @default(autoincrement())
+  starsInput Decimal @default(100) @map("stars_input") @db.Decimal(18, 2)
+  tonOutput  Decimal @default(0.6) @map("ton_output") @db.Decimal(18, 8)
+
+  @@map("exchange_rate")
+}
+
+model PaymentCommissionSettings {
+  id                             Int      @id @default(autoincrement())
+  nftWithdrawalBaseStars         Int      @default(35) @map("nft_withdrawal_base_stars")
+  standardGiftTonMarkupPercent   Float    @default(5) @map("standard_gift_ton_markup_percent")
+  standardGiftStarsMarkupPercent Float    @default(20) @map("standard_gift_stars_markup_percent")
+  updatedAt                      DateTime @updatedAt @map("updated_at")
+
+  @@map("payment_commission_settings")
+}
+
+model AdvertisingPrice {
+  id                Int      @id @default(autoincrement())
+  postingStars      Int      @default(50) @map("posting_stars")
+  notificationStars Int      @default(25) @map("notification_stars")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  @@map("advertising_price")
+}
+
+model TonInvoice {
+  id          String        @id @default(uuid()) @db.Uuid
+  userId      Int           @map("user_id")
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  amount      Float
+  currency    Currencies    @default(TON)
+  status      InvoiceStatus @default(Pending)
+  expiresAt   DateTime      @map("expires_at") @db.Timestamptz(3)
+  createdAt   DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
+  processedAt DateTime?     @map("processed_at") @db.Timestamptz(3)
+
+  @@index([userId])
+  @@index([status])
+  @@index([expiresAt])
+  @@map("ton_invoices")
+}
+
+enum InvoiceStatus {
+  Pending
+  Completed
+  Expired
+  Cancelled
+}
+
+model ChannelJoinRequestApproval {
+  id         Int               @id @default(autoincrement())
+  userId     Int               @map("user_id")
+  channelId  BigInt            @map("channel_id")
+  giveawayId String            @map("giveaway_id") @db.Uuid
+  giveaway   Giveaway          @relation(fields: [giveawayId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  status     JoinRequestStatus @default(Approved)
+  approvedAt DateTime          @default(now()) @map("approved_at") @db.Timestamptz(3)
+
+  @@unique([userId, channelId, giveawayId])
+  @@index([userId])
+  @@index([channelId])
+  @@index([giveawayId])
+  @@map("channel_join_request_approvals")
+}
+
+enum JoinRequestStatus {
+  Approved
+  Rejected
+  Pending
+}
+
+enum SponsorApprovalStatus {
+  Pending
+  Approved
+  Rejected
+}
+
+model SponsorApproval {
+  id           Int                   @id @default(autoincrement())
+  giveawayId   String                @map("giveaway_id") @db.Uuid
+  giveaway     Giveaway              @relation(fields: [giveawayId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  channelId    BigInt                @map("channel_id")
+  channel      Channel               @relation(fields: [channelId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  ownerUserId  Int                   @map("owner_user_id")
+  owner        User                  @relation(fields: [ownerUserId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  status       SponsorApprovalStatus @default(Pending)
+  trackingCode String                @unique @map("tracking_code") @db.VarChar(32)
+  messageId    BigInt?               @map("approval_message_id")
+
+  respondedAt DateTime? @map("responded_at") @db.Timestamptz(3)
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@unique([giveawayId, channelId, ownerUserId])
+  @@index([giveawayId])
+  @@index([channelId])
+  @@index([trackingCode])
+  @@map("sponsor_approvals")
+}
+
+model DescriptionRequest {
+  id                        Int       @id @default(autoincrement())
+  userId                    Int       @unique @map("user_id")
+  user                      User      @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  description               String?
+  participationButtonText   String?   @map("participation_button_text")
+  participationButtonStyle  String?   @map("participation_button_style")
+  showParticipationCount    Boolean?  @map("show_participation_count")
+  showParticipationMaxCount Boolean?  @map("show_participation_max_count")
+  participiationType        String?   @map("participation_type")
+  language                  String?
+  completionType            String?   @map("completion_type")
+  maxParticipants           Int?      @map("max_participants")
+  flowState                 String    @default("awaiting_text") @map("flow_state")
+  confirmedAt               DateTime? @map("confirmed_at") @db.Timestamptz(3)
+  previewMessageIds         Json?     @map("preview_message_ids")
+  expiresAt                 DateTime  @map("expires_at") @db.Timestamptz(3)
+  createdAt                 DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@map("description_requests")
+}
+
+model TempBannerUpload {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  filePaths String[] @map("file_paths")
+  urls      String[]
+  expiresAt DateTime @map("expires_at") @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@index([userId])
+  @@map("temp_banner_uploads")
+}
+
+enum LinkRequestStatus {
+  Pending
+  Accepted
+  Declined
+  AutoDeclined
+  Withdrawn
+  Refunded
+}
+
+model LinkRequest {
+  id               Int               @id @default(autoincrement())
+  giveawayId       String            @map("giveaway_id") @db.Uuid
+  giveaway         Giveaway          @relation(fields: [giveawayId], references: [id], onDelete: Cascade)
+  channelId        BigInt            @map("channel_id")
+  channel          Channel           @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  requesterId      Int               @map("requester_id")
+  requester        User              @relation(fields: [requesterId], references: [id], onDelete: Cascade)
+  status           LinkRequestStatus @default(Pending)
+  creatorMessageId BigInt?           @map("creator_message_id")
+  senderMessageId  BigInt?           @map("sender_message_id")
+  starsAmount      Int?              @map("stars_amount")
+  paidFromBalance  Boolean           @default(true) @map("paid_from_balance")
+  paidOutAt        DateTime?         @map("paid_out_at") @db.Timestamptz(3)
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@unique([giveawayId, channelId])
+  @@index([giveawayId])
+  @@index([channelId])
+  @@index([requesterId])
+  @@map("link_requests")
+}
+
+// ─── Gift prizes ─────────────────────────────────────────────────────────────
+
+enum GiveawayPrizeStatus {
+  Available // on business account, not linked to any giveaway
+  Linked // assigned to a giveaway, fee may or may not be paid
+  ReadyToClaim // giveaway ended, winner assigned — awaiting claim
+  Processing // claim queued or in progress — prevents duplicate sends
+  Cooldown // transferGift blocked by next_transfer_date, awaiting retry
+  Transferred // successfully sent to winner or chosen recipient
+  Failed // transfer failed permanently
+}
+
+enum GiveawayPrizeType {
+  UniqueGift // NFT gift deposited to business account
+  StandardGift // catalog gift bought by platform at delivery time
+}
+
+model GiveawayPrize {
+  id                         Int                 @id @default(autoincrement())
+  ownedGiftId                String?             @map("owned_gift_id")
+  telegramGiftId             String?             @map("telegram_gift_id")
+  starCount                  Int?                @map("star_count")
+  prizeType                  GiveawayPrizeType   @default(UniqueGift) @map("prize_type")
+  claimDeadline              DateTime?           @map("claim_deadline") @db.Timestamptz(3)
+  giveawayId                 String?             @map("giveaway_id") @db.Uuid
+  giveaway                   Giveaway?           @relation(fields: [giveawayId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  depositedByUserId          Int                 @map("deposited_by_user_id")
+  depositedByUser            User                @relation("PrizeDepositor", fields: [depositedByUserId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  winnerUserId               Int?                @map("winner_user_id")
+  winnerUser                 User?               @relation("PrizeWinner", fields: [winnerUserId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  winPlace                   Int?                @map("win_place")
+  giftName                   String?             @map("gift_name")
+  giftNumber                 String?             @map("gift_number")
+  giftNftName                String?             @map("gift_nft_name")
+  giftBaseName               String?             @map("gift_base_name")
+  modelName                  String?             @map("model_name")
+  symbolName                 String?             @map("symbol_name")
+  backdropName               String?             @map("backdrop_name")
+  modelRarityPermille        Int?                @map("model_rarity_permille")
+  symbolRarityPermille       Int?                @map("symbol_rarity_permille")
+  backdropRarityPermille     Int?                @map("backdrop_rarity_permille")
+  backdropCenterColor        Int?                @map("backdrop_center_color")
+  backdropEdgeColor          Int?                @map("backdrop_edge_color")
+  backdropPatternColor       Int?                @map("backdrop_pattern_color")
+  backdropTextColor          Int?                @map("backdrop_text_color")
+  modelStickerFileId         String?             @map("model_sticker_file_id")
+  symbolStickerFileId        String?             @map("symbol_sticker_file_id")
+  modelStickerPath           String?             @map("model_sticker_path")
+  symbolStickerPath          String?             @map("symbol_sticker_path")
+  modelStickerGifPath        String?             @map("model_sticker_gif_path")
+  symbolStickerGifPath       String?             @map("symbol_sticker_gif_path")
+  modelStickerGifPosterPath  String?             @map("model_sticker_gif_poster_path")
+  symbolStickerGifPosterPath String?             @map("symbol_sticker_gif_poster_path")
+  status                     GiveawayPrizeStatus @default(Available)
+  commissionPaid             Boolean             @default(false) @map("commission_paid")
+  commissionTransactionId    String?             @map("commission_transaction_id") @db.Uuid
+  nextTransferDate           DateTime?           @map("next_transfer_date") @db.Timestamptz(3)
+  transferredAt              DateTime?           @map("transferred_at") @db.Timestamptz(3)
+  createdAt                  DateTime            @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt                  DateTime            @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  participants Participant[]
+
+  @@index([giveawayId])
+  @@index([depositedByUserId])
+  @@index([winnerUserId])
+  @@map("giveaway_prize")
+}
+
+model GiftClaimCommission {
+  id          Int      @id @default(autoincrement())
+  starsAmount Int      @default(25) @map("stars_amount")
+  tonAmount   Float    @default(0.2) @map("ton_amount")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("gift_claim_commission")
+}
+
+model UserbotSession {
+  id          Int      @id @default(autoincrement())
+  accountType String   @unique @map("account_type")
+  telegramId  String   @map("telegram_id")
+  phoneNumber String   @map("phone_number")
+  session     String   @db.Text
+  status      String   @default("needs_reauth")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("userbot_session")
+}

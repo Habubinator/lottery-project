@@ -1,0 +1,102 @@
+{
+  "errors": {
+    "admin": {
+      "alreadyBanned": "Этот аккаунт уже забанен"
+    },
+    "auth": {
+      "emailTaken": "Пользователь с почтой %s уже существует",
+      "userWithEmailNotFound": "Пользователь с почтой %s не найден",
+      "userBanned": "Аккаунт заблокирован. Причина: %s\nЗаканчивается через %d минут",
+      "invalidLoginOrPassword": "Неправильный логин или пароль",
+      "sessionNotFound": "Сессия не найдена",
+      "stolenSession": "Сессия украдена"
+    },
+    "coupons": {
+      "codeTaken": "Код занят"
+    },
+    "tariff": {
+      "nameTaken": "Имя тарифа уже занято",
+      "notFound": "Тариф не найден"
+    },
+    "users": {
+      "notFound": "Пользователь не найден",
+      "passwordInvalid": "Указаный пароль не совпадает с текущим"
+    },
+    "validationError": "Ошибка валидации"
+  },
+  "validation": {
+    "isString": "Должно быть строкой",
+    "notEmpty": "Не может быть пустой",
+    "isEmail": "Должно быть настоящей почтой",
+    "isLength": "Длина строки должна быть между %d и %d символов",
+    "isNumeric": "Должно быть числом",
+    "isDate": "Должно быть датой",
+    "isArray": "Должно быть масивом",
+    "mustBeAscOrDesc": "Аргумент должен быть \"asc\" либо \"desc\"",
+    "shouldBeAddOrSubtract": "Должно быть \"add\" либо \"subtract\""
+  },
+  "permissions": {
+    "notEnough": "Недостаточно прав для доступа к этому ресурсу",
+    "stats": {
+      "resourceName": "Статистика",
+      "users_and_services": "Пользователи и услуги",
+      "payments": "Платежи"
+    },
+    "users": {
+      "resourceName": "Пользователи",
+      "read_personal_info": "Просмотр личных данных",
+      "edit_personal_info": "Редактирование личных данных",
+      "read_payments": "Просмотр платежей",
+      "edit_tariff_plan": "Редактирование тарифного плана",
+      "read_subscription": "Просмотр подписки",
+      "edit_subscription": "Редактирование подписки",
+      "activate_demo_subscription": "Активация демо-подписки",
+      "ban": "Банить",
+      "unban": "Разбанивать",
+      "login": "Вход в аккаунт"
+    },
+    "dealers": {
+      "resourceName": "Дилеры",
+      "create": "Создания аккаунта",
+      "read": "Просмотр",
+      "manage_finances": "Управление финансами",
+      "login": "Вход в аккаунт"
+    },
+    "partners": {
+      "resourceName": "Партнеры",
+      "manage": "Управление"
+    },
+    "coupons": {
+      "resourceName": "Купоны",
+      "read": "Просмотр купонов",
+      "manage": "Управление купонами"
+    },
+    "channels": {
+      "resourceName": "Каналы",
+      "read_required_attention": "Просмотр каналов требующих внимание",
+      "edit_required_attention": "Обработка каналов требующих внимание",
+      "read": "Просмотр каналов",
+      "edit": "Редактирование каналов"
+    },
+    "categories": {
+      "resourceName": "Категории",
+      "read": "Просмотр категорий",
+      "manage": "Управление категориями"
+    },
+    "tariff_plans": {
+      "resourceName": "Тарифные планы",
+      "create": "Создание тарифного плана",
+      "edit": "Редактирование тарифного плана"
+    },
+    "settings": {
+      "resourceName": "Настройки",
+      "edit_system_params": "Редактирование системных параметров",
+      "read_servers": "Просмотр серверов",
+      "manage_servers": "Менеджмент серверов",
+      "generate_short_url": "Генерация коротких ссылок"
+    }
+  },
+  "words": {
+    "favorite": "Избранное"
+  }
+}

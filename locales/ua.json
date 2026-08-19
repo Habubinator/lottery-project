@@ -1,0 +1,102 @@
+{
+  "errors": {
+    "admin": {
+      "alreadyBanned": "Цей обліковий запис вже заблоковано"
+    },
+    "auth": {
+      "emailTaken": "Користувач з поштою %s вже існує",
+      "userWithEmailNotFound": "Користувач з поштою %s не знайдений",
+      "userBanned": "Аккаунт заблоковано. Причина: %s\nЗакінчується через %d хвилин",
+      "invalidLoginOrPassword": "Неправильний логін або пароль",
+      "sessionNotFound": "Сесія не знайдена",
+      "stolenSession": "Сесія вкрадена"
+    },
+    "coupons": {
+      "codeTaken": "Код занято"
+    },
+    "tariff": {
+      "nameTaken": "Імя тарифу вже зайнято",
+      "notFound": "Тариф не знайдено"
+    },
+    "users": {
+      "notFound": "Користувач не знайдений",
+      "passwordInvalid": "Вказаний пароль не співпадає з поточним"
+    },
+    "validationError": "Помилка валідації"
+  },
+  "validation": {
+    "isString": "Повинно бути строкою",
+    "notEmpty": "Не може бути пустою",
+    "isEmail": "Повинно бути справжньою поштою",
+    "isLength": "Длина рядка повинна бути між %d і %d символами",
+    "isNumeric": "Повинно бути числом",
+    "isDate": "Повинно бути датою",
+    "isArray": "Повинно бути масивом",
+    "mustBeAscOrDesc": "Аргумент повинен бути \"asc\" або \"desc\"",
+    "shouldBeAddOrSubtract": "Повинно бути \"add\" або \"subtract\""
+  },
+  "permissions": {
+    "notEnough": "Недостатньо прав для доступу до цього ресурсу",
+    "stats": {
+      "resourceName": "Статистика",
+      "users_and_services": "Користувачі та послуги",
+      "payments": "Платежі"
+    },
+    "users": {
+      "resourceName": "Користувачі",
+      "read_personal_info": "Перегляд особистих даних",
+      "edit_personal_info": "Редагування особистих даних",
+      "read_payments": "Перегляд платежів",
+      "edit_tariff_plan": "Редагування тарифного плану",
+      "read_subscription": "Перегляд підписки",
+      "edit_subscription": "Редагування підписки",
+      "activate_demo_subscription": "Активація демо-підписки",
+      "ban": "Банити",
+      "unban": "Розбанювати",
+      "login": "Вхід до облікового запису користувачів"
+    },
+    "dealers": {
+      "resourceName": "Дилери",
+      "create": "Створення облікового запису",
+      "read": "Перегляд",
+      "manage_finances": "Управління фінансами",
+      "login": "Вхід до облікового запису дилерів"
+    },
+    "partners": {
+      "resourceName": "Партнери",
+      "manage": "Керування партнерами"
+    },
+    "coupons": {
+      "resourceName": "Купони",
+      "read": "Перегляд купонами",
+      "manage": "Керування купонами"
+    },
+    "channels": {
+      "resourceName": "Канали",
+      "read_required_attention": "Перегляд каналів, що потребують уваги",
+      "edit_required_attention": "Обробка каналів, що потребують уваги",
+      "read": "Перегляд каналів",
+      "edit": "Редагування каналів"
+    },
+    "categories": {
+      "resourceName": "Категорії",
+      "read": "Перегляд категорій",
+      "manage": "Керування категоріями"
+    },
+    "tariff_plans": {
+      "resourceName": "Тарифні плани",
+      "create": "Створення тарифного плану",
+      "edit": "Редагування тарифного плану"
+    },
+    "settings": {
+      "resourceName": "Налаштування",
+      "edit_system_params": "Редагування системних параметрів",
+      "read_servers": "Перегляд серверів",
+      "manage_servers": "Керування серверами",
+      "generate_short_url": "Генерація коротких посилань"
+    }
+  },
+  "words": {
+    "favorite": "Обране"
+  }
+}

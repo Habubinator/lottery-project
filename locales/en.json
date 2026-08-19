@@ -1,0 +1,102 @@
+{
+  "errors": {
+    "admin": {
+      "alreadyBanned": "This account is already banned"
+    },
+    "auth": {
+      "emailTaken": "User with email %s already exists",
+      "userWithEmailNotFound": "User with email %s not found",
+      "userBanned": "Account is banned. Reason: %s\nExpires in %d minutes",
+      "invalidLoginOrPassword": "Invalid login or password",
+      "sessionNotFound": "Session not found",
+      "stolenSession": "Session is stolen"
+    },
+    "coupons": {
+      "codeTaken": "Code is taken"
+    },
+    "tariff": {
+      "nameTaken": "Tariff name is already taken",
+      "notFound": "Tariff not found by id"
+    },
+    "users": {
+      "notFound": "User not found",
+      "passwordInvalid": "The specified password does not match the current one"
+    },
+    "validationError": "Validation error"
+  },
+  "validation": {
+    "isString": "Should be string",
+    "notEmpty": "Cannot be empty",
+    "isEmail": "Should be a valid email",
+    "isLength": "Length of string should be between %d and %d chars",
+    "isNumeric": "Should be a valid number",
+    "isDate": "Should be a valid date",
+    "isArray": "Should be an array",
+    "mustBeAscOrDesc": "Argument must be \"asc\" or \"desc\"",
+    "shouldBeAddOrSubtract": "Should be \"add\" or \"subtract\""
+  },
+  "permissions": {
+    "notEnough": "Not enough rights to access this resource",
+    "stats": {
+      "resourceName": "Statistics",
+      "users_and_services": "Users and Services",
+      "payments": "Payments"
+    },
+    "users": {
+      "resourceName": "Users",
+      "read_personal_info": "View personal information",
+      "edit_personal_info": "Edit personal information",
+      "read_payments": "View payments",
+      "edit_tariff_plan": "Edit tariff plan",
+      "read_subscription": "View subscription",
+      "edit_subscription": "Edit subscription",
+      "activate_demo_subscription": "Activate demo subscription",
+      "ban": "Ban",
+      "unban": "Unban",
+      "login": "Login to account of users"
+    },
+    "dealers": {
+      "resourceName": "Dealers",
+      "create": "Create an account",
+      "read": "View dealers",
+      "manage_finances": "Manage finances",
+      "login": "Login to account of dealers"
+    },
+    "partners": {
+      "resourceName": "Partners",
+      "manage": "Manage partners"
+    },
+    "coupons": {
+      "resourceName": "Coupons",
+      "read": "View coupons",
+      "manage": "Manage coupons"
+    },
+    "channels": {
+      "resourceName": "Channels",
+      "read_required_attention": "View channels requiring attention",
+      "edit_required_attention": "Process channels requiring attention",
+      "read": "View channels",
+      "edit": "Edit channels"
+    },
+    "categories": {
+      "resourceName": "Categories",
+      "read": "View categories",
+      "manage": "Manage categories"
+    },
+    "tariff_plans": {
+      "resourceName": "Tariff plans",
+      "create": "Create a tariff plan",
+      "edit": "Edit a tariff plan"
+    },
+    "settings": {
+      "resourceName": "Settings",
+      "edit_system_params": "Edit system parameters",
+      "read_servers": "View servers",
+      "manage_servers": "Manage servers",
+      "generate_short_url": "Generate short urls"
+    }
+  },
+  "words": {
+    "favorite": "Favorite"
+  }
+}
